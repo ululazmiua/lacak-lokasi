@@ -10,50 +10,63 @@
 </head>
 <body>
   <div class="form-container">
-    <h2 class="login-title">Selamat datang!</h2>
-    <p id="status">Mengecek lokasi Anda...</p>
-    <div id="map"></div>
-  </div>
+  <h2 class="login-title">Selamat datang!</h2>
+  <input type="text" id="nama" placeholder="Masukkan nama Anda" />
+  <button onclick="dapatkanLokasi()">Lacak Lokasi</button>
+  <p id="status">Mengecek lokasi Anda...</p>
+  <div id="map"></div>
+</div>
+
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     const status = document.getElementById('status');
-
-    function sendToSheets(lat, lng) {
+  
+    function sendToSheets(nama, lat, lng) {
       fetch('https://script.google.com/macros/s/AKfycbz3XdfHvkf6rL4hXhaeouyWZZgzMlXf2LYvBNM6WQmt3sx3orhu3oagVWTfyVaY-xXZ/exec', {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng, waktu: new Date().toISOString() })
+        body: JSON.stringify({ nama, lat, lng, waktu: new Date().toISOString() })
       });
     }
-
+  
     function onSuccess(pos) {
+      const nama = document.getElementById('nama').value.trim();
+      if (!nama) {
+        status.textContent = 'Silakan isi nama terlebih dahulu.';
+        return;
+      }
+  
       const { latitude, longitude } = pos.coords;
-      status.textContent = `Lokasi Anda: ${latitude}, ${longitude}`;
-      sendToSheets(latitude, longitude);
-
+      status.textContent = `Lokasi Anda (${nama}): ${latitude}, ${longitude}`;
+      sendToSheets(nama, latitude, longitude);
+  
       const map = L.map('map').setView([latitude, longitude], 15);
-
+  
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
-
+  
       L.marker([latitude, longitude]).addTo(map)
-        .bindPopup('Anda di sini!')
+        .bindPopup(`Halo ${nama}, Anda di sini!`)
         .openPopup();
     }
-
+  
     function onError() {
       status.textContent = 'Tidak bisa mendeteksi lokasi. Coba aktifkan izin lokasi.';
     }
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(onSuccess, onError);
-    } else {
-      status.textContent = 'Browser tidak mendukung Geolocation.';
+  
+    function dapatkanLokasi() {
+      status.textContent = 'Mengecek lokasi Anda...';
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(onSuccess, onError);
+      } else {
+        status.textContent = 'Browser tidak mendukung Geolocation.';
+      }
     }
   </script>
+  
 </body>
 </html>
